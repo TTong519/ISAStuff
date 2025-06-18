@@ -1,6 +1,6 @@
 namespace UnitTests
 {
-    public class UnitTest1
+    public class AssemblerTests
     {
         [Fact]
         public void Test1()
