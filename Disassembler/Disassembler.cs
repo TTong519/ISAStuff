@@ -4,6 +4,13 @@ namespace Disassembler
 {
     internal class Disassembler
     {
+        internal enum Layout
+        {
+            registers3,
+            registers2,
+            register,
+            register1value1
+        };
         static Dictionary<byte, string> OpCodes = new Dictionary<byte, string>()
         {
             [0x1] = "ADD",
@@ -22,9 +29,33 @@ namespace Disassembler
             [0xE] = "FLIPBIT",
             [0xF] = "EV",
             [0x10] = "SET",
-            [0x11] = "JMP",
-            [0x12] = "JMPZ",
+            [0x11] = "COPY",
+            [0x12] = "JMP",
+            [0x13] = "JMPZ",
         };
+        static Dictionary<string, Layout> Layouts = new Dictionary<string, Layout>()
+        {
+            ["ADD"] = Layout.registers3,
+            ["SUB"] = Layout.registers3,
+            ["MUL"] = Layout.registers3,
+            ["DIV"] = Layout.registers3,
+            ["MOD"] = Layout.registers3,
+            ["OR"] = Layout.registers3,
+            ["AND"] = Layout.registers3,
+            ["NOT"] = Layout.register,
+            ["XOR"] = Layout.registers3,
+            ["SHL"] = Layout.register1value1,
+            ["SHR"] = Layout.register1value1,
+            ["SETBIT"] = Layout.register1value1,
+            ["CLRBIT"] = Layout.register1value1,
+            ["FLIPBIT"] = Layout.register1value1,
+            ["EV"] = Layout.registers3,
+            ["SET"] = Layout.register1value1,
+            ["COPY"] = Layout.registers2,
+            ["JMP"] = Layout.register,
+            ["JMPZ"] = Layout.register1value1,
+        };
+
         static Dictionary<byte, string> Registers = new Dictionary<byte, string>()
         {
             [0x00] = "R0",
@@ -85,12 +116,26 @@ namespace Disassembler
             {
                 OpCodes.TryGetValue(code[4 * i], out string opCode);
                 assemblyLines.Add(opCode + " ");
-                Registers.TryGetValue(code[4 * i + 1], out string reg1);
-                assemblyLines[i] += reg1 + " ";
-                Registers.TryGetValue(code[4 * i + 2], out string reg2);
-                assemblyLines[i] += reg2 + " ";
-                Registers.TryGetValue(code[4 * i + 3], out string reg3);
-                assemblyLines[i] += reg3 + " ";
+                Layouts.TryGetValue(opCode, out Layout layout);
+                switch (layout)
+                {
+                    case Layout.registers3:
+                        assemblyLines[i] += Registers[code[4 * i + 1]] + " " +
+                                            Registers[code[4 * i + 2]] + " " +
+                                            Registers[code[4 * i + 3]];
+                        break;
+                    case Layout.registers2:
+                        assemblyLines[i] += Registers[code[4 * i + 1]] + " " +
+                                            Registers[code[4 * i + 2]] + " " + Registers[0xFF];
+                        break;
+                    case Layout.register:
+                        assemblyLines[i] += Registers[code[4 * i + 1]] + " " + Registers[0xFF] + " " + Registers[0xFF];
+                        break;
+                    case Layout.register1value1:
+                        assemblyLines[i] += Registers[code[4 * i + 1]] + " " +
+                                            code[4 * i + 2] + " " + Registers[0xFF];
+                        break;
+                }
             }
             File.WriteAllLines(@"..\..\..\Output\Counter.asm", assemblyLines);
         }

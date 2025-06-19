@@ -24,8 +24,9 @@ namespace Assembler
             ["FLIPBIT"] = 0xE,
             ["EV"] = 0xF,
             ["SET"] = 0x10,
-            ["JMP"] = 0x11,
-            ["JMPZ"] = 0x12,
+            ["COPY"] = 0x11,
+            ["JMP"] = 0x12,
+            ["JMPZ"] = 0x13,
         };
         static Dictionary<string, byte> Registers = new Dictionary<string, byte>()
         {
