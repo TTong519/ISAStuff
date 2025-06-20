@@ -8,10 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SharedLibrary\SharedLibrary.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Folder Include="Input\" />
   </ItemGroup>
 

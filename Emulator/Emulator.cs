@@ -7,7 +7,8 @@
             registers3,
             registers2,
             register,
-            register1value1
+            register1value1,
+            value
         };
         static Dictionary<string, Layout> Layouts = new Dictionary<string, Layout>()
         {
@@ -28,7 +29,7 @@
             ["EV"] = Layout.registers3,
             ["SET"] = Layout.register1value1,
             ["COPY"] = Layout.registers2,
-            ["JMP"] = Layout.register,
+            ["JMP"] = Layout.value,
             ["JMPZ"] = Layout.register1value1,
         };
         static Dictionary<byte, string> OpCodes = new Dictionary<byte, string>()
@@ -49,9 +50,109 @@
             [0xE] = "FLIPBIT",
             [0xF] = "EV",
             [0x10] = "SET",
-            [0x11] = "JMP",
-            [0x12] = "JMPZ",
+            [0x11] = "COPY",
+            [0x12] = "JMP",
+            [0x13] = "JMPZ",
         };
+        public static void ADD(int[] memory, byte reg1, byte reg2, byte reg3)
+        {
+            int result = memory[reg2] + memory[reg3];
+            memory[reg1] = result;
+        }
+        public static void SUB(int[] memory, byte reg1, byte reg2, byte reg3)
+        {
+            int result = memory[reg2] - memory[reg3];
+            memory[reg1] = result;
+        }
+        public static void MUL(int[] memory, byte reg1, byte reg2, byte reg3)
+        {
+            int result = memory[reg2] * memory[reg3];
+            memory[reg1] = result;
+        }
+        public static void DIV(int[] memory, byte reg1, byte reg2, byte reg3)
+        {
+            if (memory[reg3] == 0) throw new DivideByZeroException("Division by zero is not allowed.");
+            int result = memory[reg2] / memory[reg3];
+            memory[reg1] = result;
+        }
+        public static void MOD(int[] memory, byte reg1, byte reg2, byte reg3)
+        {
+            if (memory[reg3] == 0) throw new DivideByZeroException("Division by zero is not allowed.");
+            int result = memory[reg2] % memory[reg3];
+            memory[reg1] = result;
+        }
+        public static void OR(int[] memory, byte reg1, byte reg2, byte reg3)
+        {
+            memory[reg1] = (memory[reg2] | memory[reg3]);
+        }
+        public static void AND(int[] memory, byte reg1, byte reg2, byte reg3)
+        {
+            memory[reg1] = (memory[reg2] & memory[reg3]);
+        }
+        public static void NOT(int[] memory, byte reg1, byte reg2)
+        {
+            memory[reg1] = ~memory[reg2];
+        }
+        public static void XOR(int[] memory, byte reg1, byte reg2, byte reg3)
+        {
+            memory[reg1] = (memory[reg2] ^ memory[reg3]);
+        }
+        public static void SHL(int[] memory, byte reg1, byte reg2, byte value)
+        {
+            int result = memory[reg2] << value;
+            memory[reg1] = result;
+        }
+        public static void SHR(int[] memory, byte reg1, byte reg2, byte value)
+        {
+            int result = memory[reg2] >> value;
+            memory[reg1] = result;
+        }
+        public static void SETBIT(int[] memory, byte reg1, byte value)
+        {
+            memory[reg1] |= (1 << value);
+        }
+        public static void CLRBIT(int[] memory, byte reg1, byte value)
+        {
+            memory[reg1] &= ~(1 << value);
+        }
+        public static void FLIPBIT(int[] memory, byte reg1, byte value)
+        {
+            memory[reg1] ^= (1 << value);
+        }
+        public static void EV(int[] memory, byte reg1, byte reg2, byte reg3)
+        {
+            if(memory[reg2] > memory[reg3])
+            {
+                memory[reg1] = 1;
+            }
+            else if(memory[reg2] < memory[reg3])
+            {
+                memory[reg1] = -1;
+            }
+            else
+            {
+                memory[reg1] = 0;
+            }
+        }
+        public static void SET(int[] memory, byte reg1, byte value)
+        {
+            memory[reg1] = value;
+        }
+        public static void COPY(int[] memory, byte reg1, byte reg2)
+        {
+            memory[reg1] = memory[reg2];
+        }
+        public static void JMP(int[] memory, ref int programCounter, byte value)
+        {
+            programCounter = value;
+        }
+        public static void JMPZ(int[] memory, ref int programCounter, byte reg1, byte value)
+        {
+            if (memory[reg1] == 0)
+            {
+                programCounter = value;
+            }
+        }
         //static Dictionary<byte, string> Registers = new Dictionary<byte, string>()
         //{
         //    [0x00] = "R0",
@@ -104,10 +205,99 @@
         //    [0x2F] = "R47",
         //    [0xFF] = "PAD",
         //};
+        const byte INPUT_REGISTRER = 0x2F;
+        const byte INPUT_FLAG = 0x2E;
+        const byte OUTPUT_REGISTRER = 0x2D;
+        const byte OUTPUT_FLAG = 0x2C;
+        const byte RANDOM_REGISTRER = 0x2B;
+        const byte RANDOM_FLAG = 0x2A;
         static void Main(string[] args)
         {
-            byte[] code = File.ReadAllBytes(@"..\..\..\Input\Counter.bin");
-            byte[] memory = new byte[48];
+            byte[] code = File.ReadAllBytes(@"..\..\..\Input\Count.bin");
+            int[] memory = new int[48];
+            int programCounter = 0;
+            for(programCounter = 0; programCounter < code.Length/4; programCounter++)
+            {
+                string opcode = OpCodes[code[programCounter * 4]];
+                switch (opcode)
+                {
+                    case "ADD":
+                        ADD(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2], code[programCounter * 4 + 3]);
+                        break;
+                    case "SUB":
+                        SUB(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2], code[programCounter * 4 + 3]);
+                        break;
+                    case "MUL":
+                        MUL(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2], code[programCounter * 4 + 3]);
+                        break;
+                    case "DIV":
+                        DIV(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2], code[programCounter * 4 + 3]);
+                        break;
+                    case "MOD":
+                        MOD(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2], code[programCounter * 4 + 3]);
+                        break;
+                    case "OR":
+                        OR(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2], code[programCounter * 4 + 3]);
+                        break;
+                    case "AND":
+                        AND(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2], code[programCounter * 4 + 3]);
+                        break;
+                    case "NOT":
+                        NOT(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2]);
+                        break;
+                    case "XOR":
+                        XOR(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2], code[programCounter * 4 + 3]);
+                        break;
+                    case "SHL":
+                        SHL(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2], code[programCounter * 4 + 3]);
+                        break;
+                    case "SHR":
+                        SHR(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2], code[programCounter * 4 + 3]);
+                        break;
+                    case "SETBIT":
+                        SETBIT(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2]);
+                        break;
+                    case "CLRBIT":
+                        CLRBIT(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2]);
+                        break;
+                    case "FLIPBIT":
+                        FLIPBIT(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2]);
+                        break;
+                    case "EV":
+                        EV(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2], code[programCounter * 4 + 3]);
+                        break;
+                    case "SET":
+                        SET(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2]);
+                        break;
+                    case "COPY":
+                        COPY(memory, code[programCounter * 4 + 1], code[programCounter * 4 + 2]);
+                        break;
+                    case "JMP":
+                        JMP(memory, ref programCounter, code[programCounter * 4 + 1]);
+                        break;
+                    case "JMPZ":
+                        JMPZ(memory, ref programCounter, code[programCounter * 4 + 1], code[programCounter * 4 + 2]);
+                        break;
+                    default:
+                        throw new InvalidOperationException($"Unknown opcode: {opcode} at position {programCounter}");
+                }
+                if(memory[INPUT_FLAG] == 1)
+                {
+                    memory[INPUT_REGISTRER] = Console.Read();
+                    memory[INPUT_FLAG] = 0;
+                }
+                if(memory[OUTPUT_FLAG] == 1)
+                {
+                    Console.Write(memory[OUTPUT_REGISTRER]);
+                    memory[OUTPUT_FLAG] = 0;
+                }
+                if(memory[RANDOM_FLAG] == 1)
+                {
+                    Random random = new Random();
+                    memory[RANDOM_REGISTRER] = random.Next();
+                    memory[RANDOM_FLAG] = 0;
+                }
+            }
         }
     }
 }

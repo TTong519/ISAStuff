@@ -19,7 +19,6 @@
     <ProjectReference Include="..\Assembler\Assembler.csproj" />
     <ProjectReference Include="..\Disassembler\Disassembler.csproj" />
     <ProjectReference Include="..\Emulator\Emulator.csproj" />
-    <ProjectReference Include="..\SharedLibrary\SharedLibrary.csproj" />
   </ItemGroup>
 
   <ItemGroup>
